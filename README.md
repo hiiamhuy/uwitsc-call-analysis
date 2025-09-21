@@ -123,6 +123,33 @@ echo 'export HF_TOKEN=your_token_here' >> ~/.bashrc
 source ~/.bashrc
 ```
 
+### Hyak Storage & Cache Locations
+Hyak home directories (`/mmfs1/home/$UWNETID`) are capped at 10 GB, so place
+container caches and Ollama model files on gscratch before running the
+pipeline. Create persistent directories once:
+
+```bash
+mkdir -p /mmfs1/gscratch/fellows/$UWNETID/{ollama,apptainer-cache,apptainer-tmp,xgd-cache}
+mv ~/.ollama ~/.ollama.bak && ln -s /mmfs1/gscratch/fellows/$UWNETID/ollama ~/.ollama
+```
+
+Append these exports to your shell profile (or SLURM wrapper) so every session
+and batch job uses the redirected caches:
+
+```bash
+export APPTAINER_CACHEDIR=/mmfs1/gscratch/fellows/$UWNETID/apptainer-cache
+export APPTAINER_TMPDIR=/mmfs1/gscratch/fellows/$UWNETID/apptainer-tmp
+export OLLAMA_MODELS=/mmfs1/gscratch/fellows/$UWNETID/ollama
+export XDG_CACHE_HOME=/mmfs1/gscratch/fellows/$UWNETID/xgd-cache
+export PIP_CACHE_DIR=$XDG_CACHE_HOME/pip
+export HF_HOME=$XDG_CACHE_HOME/huggingface
+export TRANSFORMERS_CACHE=$HF_HOME/transformers
+```
+
+Reload the profile (`source ~/.bashrc`) and confirm the directories are
+growing on gscratch with `du -sh /mmfs1/gscratch/fellows/$UWNETID/*` while
+`~/.ollama` remains a lightweight symlink.
+
 ### Key Parameters
 - **Score Threshold**: Default 75 (calls at or above this score go to [`reviewed/`](#file-structure), below go to [`needs_further_attention/`](#file-structure))
 - **GPU Partition**: `gpu-h200` (configurable based on availability)
