@@ -66,30 +66,35 @@ export HF_TOKEN=your_hugging_face_token_here
 # Verify it's set (optional)
 echo "Token set: ${HF_TOKEN:0:10}..."
 ```
-**or, paste it into line 28 of [`run_speaker_analysis.sh`](run_speaker_analysis.sh), which looks like this:**
-```bash
-HF_TOKEN="${HF_TOKEN:(put it here!)}"
-```
 
 **Then run the complete pipeline:**
 ```bash
 # Run the complete pipeline
+WHISPERX_IMAGE=/path/to/whisperx_python.sif \
+OLLAMA_IMAGE=/path/to/ollama_python.sif \
 ./run_speaker_analysis.sh audio_data
 
 # With custom threshold
+WHISPERX_IMAGE=/path/to/whisperx_python.sif \
+OLLAMA_IMAGE=/path/to/ollama_python.sif \
 ./run_speaker_analysis.sh audio_data 80
 ```
 
 ### Manual Execution
 ```bash
-# Run orchestrator directly (still requires HF_TOKEN environment variable)
-python3 submit_slurm.py audio_data --hf-token $HF_TOKEN --threshold 75
+# Run orchestrator directly (requires HF_TOKEN and container paths)
+python3 submit_slurm.py \
+  audio_data \
+  --hf-token "$HF_TOKEN" \
+  --whisperx-image /path/to/whisperx_python.sif \
+  --ollama-image /path/to/ollama_python.sif \
+  --threshold 75
 ```
 
 ### Standalone Testing
 ```bash
 # Test transcription only
-python3 transcribe_calls.py audio_data/David --format vtt
+python3 transcribe_calls.py audio_data/David
 ```
 
 ## Configuration
@@ -104,8 +109,11 @@ python3 transcribe_calls.py audio_data/David --format vtt
   - **Validation**: The script will check if this variable is set before running
 
 #### Optional Variables
+- **`WHISPERX_IMAGE`**: Path to the WhisperX Apptainer image (default: none)
+- **`OLLAMA_IMAGE`**: Path to the Ollama Apptainer image (default: none)
+- **`OLLAMA_MODEL`**: Name of the preloaded Ollama model (default: `llama3.2:3b`)
 - **`CUDA_VISIBLE_DEVICES`**: GPU device selection (default: auto-detect)
-- **`OLLAMA_HOST`**: Ollama server binding address (default: `0.0.0.0:11434`)
+- **`OLLAMA_HOST`**: Ollama server binding address (default: `127.0.0.1:11434`)
 
 #### Setting Environment Variables Permanently
 To avoid setting the token every time you log in, add it to your shell profile:
@@ -119,6 +127,11 @@ source ~/.bashrc
 - **Score Threshold**: Default 75 (calls at or above this score go to [`reviewed/`](#file-structure), below go to [`needs_further_attention/`](#file-structure))
 - **GPU Partition**: `gpu-h200` (configurable based on availability)
 - **Model**: WhisperX "large-v2" for transcription, Ollama "llama3.2:3b" for analysis
+### Container Images
+- Build `whisperx_python.sif` and `ollama_python.sif` using the definitions in this repository.
+- Populate `container_artifacts/` with offline wheels and the Ollama tarball before invoking `apptainer build`.
+- Provide the resulting `.sif` paths via `WHISPERX_IMAGE`/`OLLAMA_IMAGE` (or the matching CLI flags) when launching the pipeline.
+
 
 ### Prompting
 

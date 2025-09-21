@@ -1,83 +1,101 @@
 #!/usr/bin/env python3
-"""
-WhisperX Transcription Script
-Transcribes audio files using WhisperX and saves as VTT format.
-"""
+"""Batch transcription helper for WhisperX."""
 
-import os
-import sys
-import subprocess
-from pathlib import Path
+from __future__ import annotations
+
 import argparse
+import subprocess
+import sys
+from pathlib import Path
+from typing import Iterable
 
-def setup_environment():
-    """Setup environment and check dependencies"""
-    # Check if whisperx_script.py exists in the expected location
-    script_path = "...dawnmai/whisperx_script.py"
-    if not os.path.exists(script_path):
-        print(f"Error: whisperx_script.py not found at {script_path}")
-        return False
-    return True
+AUDIO_EXTENSIONS = (".mp3", ".wav", ".m4a", ".flac", ".ogg", ".wmv", ".avi", ".mp4")
 
-def transcribe_speaker_folder(speaker_folder, output_format="vtt"):
-    """Transcribe all audio files in a speaker folder"""
-    speaker_path = Path(speaker_folder)
-    
-    if not speaker_path.exists():
-        print(f"Error: Speaker folder '{speaker_folder}' does not exist")
-        return False
-    
-    # Find audio files
-    audio_extensions = (".mp3", ".wav", ".m4a", ".flac", ".ogg", ".wmv", ".avi", ".mp4")
-    audio_files = []
-    for ext in audio_extensions:
-        audio_files.extend(speaker_path.glob(f"*{ext}"))
-    
-    if not audio_files:
-        print(f"No audio files found in {speaker_folder}")
-        return False
-    
-    print(f"Found {len(audio_files)} audio files in {speaker_folder}")
-    
-    # Transcribe each audio file
+SCRIPT_ROOT = Path(__file__).resolve().parent
+WHISPERX_SCRIPT = SCRIPT_ROOT / "whisperx_script.py"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Transcribe every audio file in a folder")
+    parser.add_argument("speaker_folder", type=Path, help="Directory containing an agent's audio files")
+    parser.add_argument(
+        "--device",
+        default="cuda",
+        help="Execution device for WhisperX (default: cuda)",
+    )
+    parser.add_argument(
+        "--output-format",
+        choices=["vtt"],
+        default="vtt",
+        help="Output format (currently only vtt is supported)",
+    )
+    parser.add_argument(
+        "--whisperx-script",
+        type=Path,
+        default=WHISPERX_SCRIPT,
+        help="Path to the single-file transcription script",
+    )
+    parser.add_argument(
+        "--extra-args",
+        nargs=argparse.REMAINDER,
+        default=[],
+        help="Additional arguments forwarded to whisperx_script.py",
+    )
+    return parser.parse_args()
+
+
+def discover_audio_files(folder: Path) -> list[Path]:
+    files: list[Path] = []
+    for extension in AUDIO_EXTENSIONS:
+        files.extend(folder.glob(f"*{extension}"))
+    return sorted({file.resolve() for file in files})
+
+
+def run_transcription(audio_files: Iterable[Path], script_path: Path, device: str, extra_args: list[str]) -> None:
+    python_exec = Path(sys.executable)
     for audio_file in audio_files:
-        print(f"Transcribing: {audio_file.name}")
-        
-        # Run WhisperX transcription
+        print(f"Transcribing {audio_file.name} ...")
         cmd = [
-            "python3", ".../dawnmai/whisperx_script.py", str(audio_file)
-        ]
-        
-        result = subprocess.run(cmd, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        
+            str(python_exec),
+            str(script_path),
+            str(audio_file),
+            "--device",
+            device,
+        ] + extra_args
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
         if result.returncode != 0:
-            print(f"Transcription failed for {audio_file.name}")
-            print(f"Error: {result.stderr}")
-            continue
-        
-        print(f"Successfully transcribed {audio_file.name}")
-    
-    # Check for output files
-    vtt_files = list(speaker_path.glob("*.vtt"))
-    if vtt_files:
-        print(f"Generated {len(vtt_files)} VTT files")
-        return True
-    else:
-        print("No VTT files were generated")
-        return False
+            print(f"  Transcription failed for {audio_file.name}")
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr)
+        else:
+            print(f"  Completed {audio_file.name}")
 
-def main():
-    parser = argparse.ArgumentParser(description="Transcribe audio files using WhisperX")
-    parser.add_argument("speaker_folder", help="Speaker folder containing audio files")
-    parser.add_argument("--format", default="vtt", help="Output format (default: vtt)")
-    
-    args = parser.parse_args()
-    
-    if not setup_environment():
-        sys.exit(1)
-    
-    success = transcribe_speaker_folder(args.speaker_folder, args.format)
-    sys.exit(0 if success else 1)
+
+def main() -> None:
+    args = parse_args()
+
+    speaker_folder = args.speaker_folder.expanduser().resolve()
+    script_path = args.whisperx_script.expanduser().resolve()
+
+    if not script_path.exists():
+        raise SystemExit(f"whisperx_script.py not found at {script_path}")
+    if not speaker_folder.exists() or not speaker_folder.is_dir():
+        raise SystemExit(f"Speaker folder not found: {speaker_folder}")
+
+    audio_files = discover_audio_files(speaker_folder)
+    if not audio_files:
+        raise SystemExit(f"No audio files discovered in {speaker_folder}")
+
+    run_transcription(audio_files, script_path, args.device, args.extra_args)
+
+    vtt_files = sorted(speaker_folder.glob("*.vtt"))
+    print(f"Generated {len(vtt_files)} VTT files in {speaker_folder}")
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        raise SystemExit(130)

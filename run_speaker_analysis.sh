@@ -1,58 +1,136 @@
 #!/bin/bash
-# Speaker Analysis Runner Script
-# Usage: ./run_speaker_analysis.sh <base_directory> <hf_token>
+# Wrapper for submitting the transcription + analysis pipeline to SLURM.
 
-if [ $# -lt 1 ]; then
-    echo "Usage: $0 <folder_name> [threshold]"
-    echo ""
-    echo "Arguments:"
-    echo "  folder_name       - Name of folder containing speaker folders (e.g., 'audio_data')"
-    echo "  threshold         - Optional: Score threshold for organization (default: 75)"
-    echo ""
-    echo "Example:"
-    echo "  $0 audio_data"
-    echo "  $0 audio_data 80"
-    echo ""
-    echo "Note: HF token must be set as environment variable: export HF_TOKEN=your_token_here"
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || echo "$SCRIPT_DIR")"
+
+usage() {
+    cat <<USAGE
+Usage: $0 [options] <folder_name> [threshold]
+
+Positional arguments:
+  folder_name            Relative path (from repo root) or absolute path containing agent folders
+  threshold              Optional score threshold (default: 75)
+
+Options:
+  --whisperx-image PATH  Path to whisperx Apptainer image (.sif). Overrides WHISPERX_IMAGE env.
+  --ollama-image PATH    Path to ollama Apptainer image (.sif). Overrides OLLAMA_IMAGE env.
+  --ollama-model NAME    Ollama model to use (default: llama3.2:3b or OLLAMA_MODEL env).
+  --partition NAME       SLURM partition (default: gpu-h200).
+  --gpus N               GPUs per job (default: 1).
+  --mem GB               Memory per job in GB (default: 32).
+  --time HH:MM:SS        Time limit per job (default: 02:00:00).
+  --account NAME         SLURM account name (default: SLURM_ACCOUNT env).
+  -h, --help             Show this help message.
+
+Environment:
+  HF_TOKEN must be exported with a valid Hugging Face token.
+USAGE
+}
+
+WHISPERX_IMAGE="${WHISPERX_IMAGE:-}"
+OLLAMA_IMAGE="${OLLAMA_IMAGE:-}"
+OLLAMA_MODEL="${OLLAMA_MODEL:-llama3.2:3b}"
+PARTITION="gpu-h200"
+GPUS=1
+MEM=32
+TIME_LIMIT="02:00:00"
+ACCOUNT="${SLURM_ACCOUNT:-}"
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --whisperx-image)
+            WHISPERX_IMAGE="$2"; shift 2 ;;
+        --ollama-image)
+            OLLAMA_IMAGE="$2"; shift 2 ;;
+        --ollama-model)
+            OLLAMA_MODEL="$2"; shift 2 ;;
+        --partition)
+            PARTITION="$2"; shift 2 ;;
+        --gpus)
+            GPUS="$2"; shift 2 ;;
+        --mem)
+            MEM="$2"; shift 2 ;;
+        --time)
+            TIME_LIMIT="$2"; shift 2 ;;
+        --account)
+            ACCOUNT="$2"; shift 2 ;;
+        -h|--help)
+            usage; exit 0 ;;
+        --)
+            shift; break ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 1 ;;
+        *)
+            POSITIONAL+=("$1"); shift ;;
+    esac
+done
+
+set -- "${POSITIONAL[@]}" "$@"
+
+if [[ $# -lt 1 ]]; then
+    usage
     exit 1
 fi
 
-# Parse arguments
-FOLDER_NAME="$1"
+FOLDER_ARG="$1"
 THRESHOLD="${2:-75}"
 
-# Set up paths
-BASE_DIR="$(pwd)/$FOLDER_NAME"
-
-# Use the token from environment variable
-HF_TOKEN="${HF_TOKEN:-}"
-
-echo "Starting Speaker Analysis Pipeline"
-echo "Base directory: $BASE_DIR"
-echo "HF Token: ${HF_TOKEN:0:10}..."
-echo "Score threshold: $THRESHOLD"
-echo ""
-
-# Check if HF_TOKEN is provided
-if [ -z "$HF_TOKEN" ]; then
-    echo "Error: HF_TOKEN environment variable is required"
-    echo "Please set it with: export HF_TOKEN=your_token_here"
+if [[ -z "${HF_TOKEN:-}" ]]; then
+    echo "HF_TOKEN environment variable must be set" >&2
     exit 1
 fi
 
-# Check if base directory exists
-if [ ! -d "$BASE_DIR" ]; then
-    echo "Error: Base directory '$BASE_DIR' does not exist"
-    echo "   Please ensure the folder exists and contains speaker subfolders with audio files"
+if [[ "$FOLDER_ARG" = /* ]]; then
+    BASE_DIR="$(realpath "$FOLDER_ARG")"
+else
+    BASE_DIR="$(realpath "$REPO_ROOT/$FOLDER_ARG")"
+fi
+
+if [[ ! -d "$BASE_DIR" ]]; then
+    echo "Base directory not found: $BASE_DIR" >&2
     exit 1
 fi
 
-echo "Using existing folder: $BASE_DIR"
+if [[ -z "$WHISPERX_IMAGE" || ! -f "$WHISPERX_IMAGE" ]]; then
+    echo "WhisperX image not provided or does not exist" >&2
+    exit 1
+fi
 
+if [[ -z "$OLLAMA_IMAGE" || ! -f "$OLLAMA_IMAGE" ]]; then
+    echo "Ollama image not provided or does not exist" >&2
+    exit 1
+fi
 
-# Run the orchestrator
-cd /mmfs1/gscratch/fellows/dawnmai
-python3 submit_slurm.py "$BASE_DIR" --hf-token "$HF_TOKEN" --threshold "$THRESHOLD"
+echo "Running pipeline"
+echo "  Repo root:     $REPO_ROOT"
+echo "  Base dir:      $BASE_DIR"
+echo "  Threshold:     $THRESHOLD"
+echo "  WhisperX SIF:  $WHISPERX_IMAGE"
+echo "  Ollama SIF:    $OLLAMA_IMAGE"
+echo "  Ollama model:  $OLLAMA_MODEL"
+echo "  Partition:     $PARTITION"
+echo "  GPUs per job:  $GPUS"
+echo "  Mem per job:   $MEM GB"
+echo "  Time limit:    $TIME_LIMIT"
 
-echo ""
-echo "Speaker analysis pipeline completed!"
+python3 "$REPO_ROOT/submit_slurm.py" \
+    "$BASE_DIR" \
+    --hf-token "$HF_TOKEN" \
+    --threshold "$THRESHOLD" \
+    --repo-root "$REPO_ROOT" \
+    --whisperx-image "$WHISPERX_IMAGE" \
+    --ollama-image "$OLLAMA_IMAGE" \
+    --ollama-model "$OLLAMA_MODEL" \
+    --partition "$PARTITION" \
+    --gpus "$GPUS" \
+    --mem "$MEM" \
+    --time-limit "$TIME_LIMIT" \
+    ${ACCOUNT:+--account "$ACCOUNT"}
+
+echo "Submission complete. Monitor progress with: squeue -u $USER"
