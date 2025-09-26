@@ -58,6 +58,12 @@ home-directory/
 
 ### Quick Start
 
+**Set container image environment variables once (or pass inline as shown below):**
+```bash
+export WHISPERX_IMAGE=/mmfs1/gscratch/fellows/$UWNETID/whisperx_python.sif
+export OLLAMA_IMAGE=/mmfs1/gscratch/fellows/$UWNETID/ollama_python.sif
+```
+
 **First, set up your Hugging Face token:**
 ```bash
 # Set your Hugging Face token as an environment variable
