@@ -70,7 +70,7 @@ export OLLAMA_IMAGE=/mmfs1/gscratch/fellows/$UWNETID/ollama_python.sif
 export HF_TOKEN=your_hugging_face_token_here
 
 # Verify it's set (optional)
-echo "Token set: ${HF_TOKEN:0:10}..."
+echo $HF_TOKEN
 ```
 
 **Then run the complete pipeline:**

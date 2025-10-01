@@ -30,6 +30,7 @@ class ContainerConfig:
     mem_gb: int = 32
     time_limit: str = DEFAULT_JOB_TIME
     account: Optional[str] = None
+    qos: Optional[str] = None
 
 
 class SpeakerAnalysisOrchestrator:
@@ -68,12 +69,13 @@ class SpeakerAnalysisOrchestrator:
         model_name = self.config.ollama_model
 
         account_line = f"#SBATCH --account={self.config.account}" if self.config.account else ""
+        qos_line = f"#SBATCH --qos={self.config.qos}" if self.config.qos else ""
 
         script = f"""#!/bin/bash
 #SBATCH --job-name={job_name}
 #SBATCH --partition={self.config.partition}
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
 #SBATCH --gpus={self.config.gpus_per_job}
 #SBATCH --mem={self.config.mem_gb}G
 #SBATCH --time={self.config.time_limit}
@@ -81,6 +83,7 @@ class SpeakerAnalysisOrchestrator:
 #SBATCH --error={self.base_dir}/logs/{job_name}_%j.err
 #SBATCH --mail-type=END,FAIL
 {account_line}
+{qos_line}
 
 set -euo pipefail
 
@@ -115,10 +118,25 @@ apptainer exec --nv \
   bash <<ANALYZE
 set -euo pipefail
 export OLLAMA_HOST="127.0.0.1:11434"
+
+# Start Ollama server with proper error handling
 ollama serve >/tmp/ollama.log 2>&1 &
-OLLAMA_PID=$!
-trap 'kill $OLLAMA_PID' EXIT
-python3 "$REPO_ROOT/analyze_with_ollama.py" "$SPEAKER_DIR" --model "$OLLAMA_MODEL"
+OLLAMA_PID=\${!:-}
+
+# Check if Ollama started successfully
+if [[ -n "\$OLLAMA_PID" ]] && kill -0 "\$OLLAMA_PID" 2>/dev/null; then
+    echo "Ollama server started with PID: \$OLLAMA_PID"
+    trap 'kill \$OLLAMA_PID 2>/dev/null || true' EXIT
+    
+    # Wait a moment for Ollama to initialize
+    sleep 5
+    
+    # Run the analysis
+    python3 "$REPO_ROOT/analyze_with_ollama.py" "$SPEAKER_DIR" --model "$OLLAMA_MODEL"
+else
+    echo "Failed to start Ollama server, skipping analysis" >&2
+    exit 1
+fi
 ANALYZE
 
 echo "Pipeline completed for {speaker_folder.name}"
@@ -299,6 +317,11 @@ def parse_arguments() -> argparse.Namespace:
         default=os.environ.get("SLURM_ACCOUNT"),
         help="Optional SLURM account override",
     )
+    parser.add_argument(
+        "--qos",
+        default=None,
+        help="SLURM QoS (Quality of Service) - omit if your cluster doesn't use QoS",
+    )
     return parser.parse_args()
 
 
@@ -325,6 +348,7 @@ def main() -> None:
         mem_gb=args.mem,
         time_limit=args.time_limit,
         account=args.account,
+        qos=args.qos,
     )
 
     orchestrator = SpeakerAnalysisOrchestrator(base_dir, args.hf_token, args.threshold, config)
