@@ -69,7 +69,17 @@ class SpeakerAnalysisOrchestrator:
         model_name = self.config.ollama_model
 
         account_line = f"#SBATCH --account={self.config.account}" if self.config.account else ""
-        qos_line = f"#SBATCH --qos={self.config.qos}" if self.config.qos else ""
+
+        # Auto-determine QoS if not explicitly set
+        if self.config.qos:
+            qos_line = f"#SBATCH --qos={self.config.qos}"
+        elif self.config.account and self.config.partition.startswith("gpu-"):
+            # Format: {account}-gpu-{gpu_type}
+            gpu_type = self.config.partition.replace("gpu-", "")
+            auto_qos = f"{self.config.account}-gpu-{gpu_type}"
+            qos_line = f"#SBATCH --qos={auto_qos}"
+        else:
+            qos_line = ""
 
         script = f"""#!/bin/bash
 #SBATCH --job-name={job_name}
@@ -89,10 +99,7 @@ set -euo pipefail
 
 module load apptainer
 
-if [[ -z "${{HF_TOKEN:-}}" ]]; then
-  echo "HF_TOKEN environment variable is required" >&2
-  exit 1
-fi
+export HF_TOKEN="{self.hf_token}"
 
 REPO_ROOT="{repo_root}"
 BASE_DIR="{self.base_dir}"
@@ -116,21 +123,53 @@ apptainer exec --nv \
   --bind "$BASE_DIR:$BASE_DIR" \
   "$OLLAMA_IMAGE" \
   bash <<ANALYZE
-set -euo pipefail
+set -eo pipefail
 export OLLAMA_HOST="127.0.0.1:11434"
+export no_proxy="localhost,127.0.0.1"
+export NO_PROXY="localhost,127.0.0.1"
+unset http_proxy
+unset https_proxy
+unset HTTP_PROXY
+unset HTTPS_PROXY
 
 # Start Ollama server with proper error handling
 ollama serve >/tmp/ollama.log 2>&1 &
-OLLAMA_PID=\${!:-}
+OLLAMA_PID=\$!
+set -u
 
 # Check if Ollama started successfully
 if [[ -n "\$OLLAMA_PID" ]] && kill -0 "\$OLLAMA_PID" 2>/dev/null; then
     echo "Ollama server started with PID: \$OLLAMA_PID"
     trap 'kill \$OLLAMA_PID 2>/dev/null || true' EXIT
-    
-    # Wait a moment for Ollama to initialize
-    sleep 5
-    
+
+    # Wait for Ollama to be ready (up to 60 seconds)
+    echo "Waiting for Ollama server to be ready..."
+    for i in {{1..12}}; do
+        if curl -s http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+            echo "Ollama server is ready"
+            break
+        fi
+        echo "  Attempt \$i/12: waiting..."
+        sleep 5
+    done
+
+    # Ensure the model is loaded
+    echo "Loading model: $OLLAMA_MODEL"
+    ollama pull "$OLLAMA_MODEL" 2>&1 | head -20
+
+    # Wait for model to be fully loaded and ready
+    echo "Waiting for model to be fully loaded..."
+    sleep 30
+
+    # Verify model is in the list
+    ollama list
+
+    # Warm up the model with a test request to load it into GPU memory
+    echo "Warming up model..."
+    echo '{{"model": "$OLLAMA_MODEL", "prompt": "Hello", "stream": false}}' | \
+        curl -s -X POST http://127.0.0.1:11434/api/generate -d @- > /dev/null
+    echo "Model warmed up and ready"
+
     # Run the analysis
     python3 "$REPO_ROOT/analyze_with_ollama.py" "$SPEAKER_DIR" --model "$OLLAMA_MODEL"
 else
