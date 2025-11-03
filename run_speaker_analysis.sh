@@ -119,7 +119,7 @@ echo "  GPUs per job:  $GPUS"
 echo "  Mem per job:   $MEM GB"
 echo "  Time limit:    $TIME_LIMIT"
 
-python3 "$REPO_ROOT/submit_slurm.py" \
+python3 "$REPO_ROOT/uwitsc-call-analysis/submit_slurm.py" \
     "$BASE_DIR" \
     --hf-token "$HF_TOKEN" \
     --threshold "$THRESHOLD" \

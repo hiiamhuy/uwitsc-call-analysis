@@ -106,11 +106,13 @@ def call_ollama(model: str, prompt: str) -> Tuple[int, str]:
         if isinstance(parsed, dict):
             score = int(parsed.get("score", score))
             reasoning = parsed.get("reasoning", reasoning)
+            # If reasoning field contains nested structure, log warning and extract
             if isinstance(reasoning, dict):
+                print(f"  Warning: Received nested dict structure in reasoning field: {reasoning}")
                 score = int(reasoning.get("score", score))
-                reasoning = reasoning.get("reasoning", reasoning)
-    except (ValueError, json.JSONDecodeError):
-        pass
+                reasoning = reasoning.get("reasoning", str(reasoning))
+    except (ValueError, json.JSONDecodeError) as exc:
+        print(f"  Warning: Failed to parse JSON response: {exc}")
     return score, reasoning
 
 

@@ -115,7 +115,7 @@ apptainer exec --nv \
   --bind "$REPO_ROOT:$REPO_ROOT" \
   --bind "$BASE_DIR:$BASE_DIR" \
   "$WHISPERX_IMAGE" \
-  python3 "$REPO_ROOT/transcribe_calls.py" "$SPEAKER_DIR" --device cuda
+  python3 "$REPO_ROOT/uwitsc-call-analysis/transcribe_calls.py" "$SPEAKER_DIR" --device cuda
 
 # Launch Ollama-backed analysis
 apptainer exec --nv \
@@ -171,7 +171,7 @@ if [[ -n "\$OLLAMA_PID" ]] && kill -0 "\$OLLAMA_PID" 2>/dev/null; then
     echo "Model warmed up and ready"
 
     # Run the analysis
-    python3 "$REPO_ROOT/analyze_with_ollama.py" "$SPEAKER_DIR" --model "$OLLAMA_MODEL"
+    python3 "$REPO_ROOT/uwitsc-call-analysis/analyze_with_ollama.py" "$SPEAKER_DIR" --model "$OLLAMA_MODEL"
 else
     echo "Failed to start Ollama server, skipping analysis" >&2
     exit 1
@@ -251,7 +251,7 @@ echo "Pipeline completed for {speaker_folder.name}"
             audio_name = payload.get("audio_file", transcription_file)
             audio_path = speaker_folder / audio_name
             call_id = Path(audio_name).stem
-            destination_root = needs_attention if score <= self.score_threshold else reviewed
+            destination_root = needs_attention if score < self.score_threshold else reviewed
             target_dir = destination_root / call_id
             target_dir.mkdir(parents=True, exist_ok=True)
 

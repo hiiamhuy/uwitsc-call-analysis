@@ -11,6 +11,7 @@ dependencies are available.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 from typing import Iterable, Optional
@@ -109,7 +110,10 @@ def load_diarization_model(device: str):
         # Pyannote diarization requires GPU; skip politely.
         return None
     try:
-        return whisperx.load_model("pyannote/speaker-diarization", device=device)
+        hf_token = os.environ.get("HF_TOKEN")
+        if not hf_token:
+            return None
+        return whisperx.DiarizationPipeline(use_auth_token=hf_token, device=device)
     except Exception:
         return None
 
@@ -207,7 +211,7 @@ def main() -> None:
         diarization_model = load_diarization_model(args.device)
         if diarization_model is not None:
             print("Running diarization...")
-            diarize_segments = diarization_model(audio, min_speakers=1, max_speakers=2)
+            diarize_segments = diarization_model(audio)
             result = whisperx.assign_word_speakers(diarize_segments, result)
 
     if diarize_segments is None:
