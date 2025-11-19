@@ -211,7 +211,7 @@ def main() -> None:
         diarization_model = load_diarization_model(args.device)
         if diarization_model is not None:
             print("Running diarization...")
-            diarize_segments = diarization_model(audio)
+            diarize_segments = diarization_model(audio, min_speakers=1, max_speakers=2)
             result = whisperx.assign_word_speakers(diarize_segments, result)
 
     if diarize_segments is None:
