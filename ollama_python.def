@@ -1,0 +1,60 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/nvhpc:25.3-devel-cuda_multi-rockylinux9
+
+%labels
+    Description "Container for Ollama + Python"
+
+%files
+    container_artifacts/ollama/ollama-linux-amd64.tgz /opt/build/ollama-linux-amd64.tgz
+    container_artifacts/ollama/requirements.txt /opt/build/requirements.txt
+    container_artifacts/ollama/wheels /opt/build/wheels
+    container_artifacts/ollama/models /opt/ollama/models
+
+%post
+    set -eu
+
+
+    dnf install -y --allowerasing python3 python3-pip curl ca-certificates || true
+    dnf clean all
+
+    ln -sf /usr/bin/python3 /usr/bin/python || true
+    ln -sf /usr/bin/pip3 /usr/bin/pip || true
+
+    if [ ! -f /opt/build/ollama-linux-amd64.tgz ]; then
+        echo "Missing Ollama archive at /opt/build/ollama-linux-amd64.tgz" >&2
+        exit 1
+    fi
+
+    mkdir -p /opt/ollama/dist
+    tar -C /opt/ollama/dist -xzf /opt/build/ollama-linux-amd64.tgz
+    ln -sf /opt/ollama/dist/bin/ollama /usr/bin/ollama || ln -sf /opt/ollama/dist/bin/ollama /usr/local/bin/ollama || true
+
+    if [ -d /opt/build/wheels ]; then
+        pip install --upgrade pip
+        pip install --find-links /opt/build/wheels -r /opt/build/requirements.txt
+    else
+        pip install -r /opt/build/requirements.txt
+    fi
+
+    mkdir -p /root/.ollama/models
+    if [ -d /opt/ollama/models ]; then
+        cp -r /opt/ollama/models/* /root/.ollama/models/ 2>/dev/null || true
+    fi
+
+    rm -rf /root/.cache/pip
+
+%environment
+    export PATH=/opt/ollama/dist/bin:$PATH
+
+%runscript
+    export OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"
+    echo "Starting Ollama server on $OLLAMA_HOST"
+    ollama serve &
+    SERVER_PID=$!
+    trap "kill $SERVER_PID" EXIT
+
+    if [ $# -eq 0 ]; then
+        wait "$SERVER_PID"
+    else
+        exec "$@"
+    fi

@@ -1,0 +1,41 @@
+# Container images
+*.sif
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# Backup files
+*~
+*.bak
+
+# Miniconda installer
+Miniconda3-latest-Linux-x86_64.sh
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.Python
+
+# Development and testing artifacts
+.claude/
+.serena/
+Testing/
+test_data/
+audio_data/
+
+# Environment files (contain sensitive tokens)
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+*.out
+*.err
+
+# OS files
+.DS_Store
+Thumbs.db

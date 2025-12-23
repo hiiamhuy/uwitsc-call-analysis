@@ -1,0 +1,2 @@
+# Wheels required to build the Ollama container.
+requests==2.32.3
