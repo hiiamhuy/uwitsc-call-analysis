@@ -20,8 +20,6 @@ __pycache__/
 .Python
 
 # Development and testing artifacts
-.claude/
-.serena/
 Testing/
 test_data/
 audio_data/
