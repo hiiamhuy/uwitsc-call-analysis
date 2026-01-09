@@ -1,0 +1,43 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:05.000
+[Agent] Hello, UW IT Service Desk. This is Alex. How can I help you today?
+
+00:00:05.500 --> 00:00:08.000
+[user] Hi, I'm having trouble accessing my email.
+
+00:00:08.500 --> 00:00:12.000
+[Agent] I'd be happy to help. Can I get your NetID to verify your account?
+
+00:00:12.500 --> 00:00:15.000
+[user] Sure, it's student123.
+
+00:00:15.500 --> 00:00:22.000
+[Agent] Thank you. For security, I'll need to verify your identity using Zoom. Can you start a Zoom call with me?
+
+00:00:22.500 --> 00:00:25.000
+[user] Yes, I can do that.
+
+00:00:25.500 --> 00:00:35.000
+[Agent] Great. Now that I've verified your identity, let me check your email settings. It looks like your password expired. I'll walk you through resetting it.
+
+00:00:35.500 --> 00:00:40.000
+[Agent] Go to myuw.uw.edu and click on the password reset link. Follow the prompts to create a new password.
+
+00:00:40.500 --> 00:00:43.000
+[user] Okay, I'm doing that now.
+
+00:00:43.500 --> 00:00:48.000
+[Agent] Make sure your password is at least 12 characters with uppercase, lowercase, and numbers.
+
+00:00:48.500 --> 00:00:51.000
+[user] Done! I can access my email now.
+
+00:00:51.500 --> 00:00:55.000
+[Agent] Excellent! Is there anything else I can help you with today?
+
+00:00:55.500 --> 00:00:57.000
+[user] No, that's all. Thank you!
+
+00:00:57.500 --> 00:01:00.000
+[Agent] You're welcome. Have a great day!

@@ -1,0 +1,31 @@
+WEBVTT
+
+00:00:01.000 --> 00:00:04.000
+[Agent] IT help desk, how can I assist?
+
+00:00:04.500 --> 00:00:08.000
+[user] I can't print from the library computer.
+
+00:00:08.500 --> 00:00:18.000
+[Agent] Okay, what's your NetID? Actually, let me look up your information first. What's your student number?
+
+00:00:18.500 --> 00:00:22.000
+[user] It's 1234567. My NetID is testuser.
+
+00:00:22.500 --> 00:00:28.000
+[Agent] Alright, I see your account. Try logging out and back in.
+
+00:00:28.500 --> 00:00:30.000
+[user] That didn't work.
+
+00:00:30.500 --> 00:00:35.000
+[Agent] Hmm, maybe restart the computer then.
+
+00:00:35.500 --> 00:00:38.000
+[user] Still not working.
+
+00:00:38.500 --> 00:00:42.000
+[Agent] Not sure what else to try. You might need to contact the library IT directly.
+
+00:00:42.500 --> 00:00:45.000
+[user] Okay, I guess I'll do that. Thanks.

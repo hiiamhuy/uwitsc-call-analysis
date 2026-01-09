@@ -1,0 +1,6 @@
+# Wheels required to build the WhisperX container.
+whisperx
+torch
+torchaudio
+ffmpeg-python==0.2.0
+requests==2.32.3
