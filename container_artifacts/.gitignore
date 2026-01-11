@@ -1,0 +1,8 @@
+# Ignore downloaded artifacts
+whisperx/wheels/*
+ollama/wheels/*
+ollama/models/*
+ollama/ollama-linux-amd64.tgz
+!whisperx/wheels/.gitkeep
+!ollama/wheels/.gitkeep
+!ollama/models/.gitkeep

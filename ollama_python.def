@@ -1,0 +1,48 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/nvhpc:25.3-devel-cuda_multi-rockylinux9
+
+%labels
+    Description "Container for Ollama + Python3.9 generated on May 27, 2025"
+
+%post
+    # Python 3.9 is already installed in the NVHPC image
+    # Bootstrap pip using ensurepip (avoids dnf issues in fakeroot)
+    python3 -m ensurepip --upgrade || true
+
+    # Create python/pip symlinks for convenience (ignore if they already exist)
+    ln -sf /usr/bin/python3 /usr/bin/python 2>/dev/null || true
+
+    # Install Ollama to /opt (writable in fakeroot)
+    mkdir -p /opt/ollama
+    curl -L https://ollama.com/download/ollama-linux-amd64.tgz -o /tmp/ollama-linux-amd64.tgz
+    tar -C /opt/ollama -xzf /tmp/ollama-linux-amd64.tgz
+    rm /tmp/ollama-linux-amd64.tgz
+
+    # Create symlink to ollama binary
+    ln -sf /opt/ollama/bin/ollama /usr/local/bin/ollama 2>/dev/null || true
+
+    # Ollama Python libraries
+    python3 -m pip install --upgrade pip
+    python3 -m pip install ollama requests
+
+%environment
+    export PATH=/opt/ollama/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/ollama/lib/ollama:$LD_LIBRARY_PATH
+
+%runscript
+    echo "Ollama is not running by default."
+    echo "Run `ollama serve &` to start the server before using the Python API."
+    echo "Ollama will save and look for models in ~/.ollama/models by default."
+    echo "To manage your Ollama storage, refer to https://hyak.uw.edu/docs/gpus/ollama_setup"
+    # Start Ollama server automatically
+    echo "Starting Ollama server..."
+    ollama serve &
+    sleep 5
+
+    if [ $# -eq 0 ]; then
+        # If no arguments are provided, launch the bash shell
+        exec /bin/bash
+    else
+        # If any arguments are given, run them as a command
+        exec "$@"
+    fi
