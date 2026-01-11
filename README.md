@@ -12,6 +12,7 @@ This pipeline processes customer service call audio files through automated tran
   - [Step 3: Run the Pipeline](#step-3-run-the-pipeline)
   - [Step 4: Monitor Progress](#step-4-monitor-progress)
   - [Step 5: Review Results](#step-5-review-results)
+  - [Step 6: Archive Processed Data](#step-6-archive-processed-data)
 - [Advanced Usage](#advanced-usage)
   - [Manual Execution](#manual-execution)
   - [Standalone Testing](#standalone-testing)
@@ -164,6 +165,26 @@ Each call folder contains:
 - `[CallID].wav` - Original audio file
 - `[CallID].vtt` - Transcription with speaker labels
 - `analysis_results.json` - Quality analysis with detailed component scores
+
+### Step 6: Archive Processed Data
+
+> **IMPORTANT**: Any agent folders left in `audio_data/` will be reprocessed the next time you run the pipeline. This wastes compute resources and time.
+
+After reviewing your results, move the processed agent folders to your Globus-connected OneDrive for archival:
+
+1. Open [Globus File Manager](https://app.globus.org/file-manager)
+2. Set your source endpoint to your Hyak storage location
+3. Set your destination endpoint to your OneDrive collection
+4. Navigate to `audio_data/` on the source side
+5. Select the agent folders you want to archive (e.g., `David/`, `Sarah/`)
+6. Transfer the folders to your OneDrive
+
+After the transfer completes, delete the folders from Hyak to prevent reprocessing:
+1. In Globus File Manager, navigate to `audio_data/` on your Hyak endpoint
+2. Check the boxes next to the agent folders you want to remove
+3. Click **"Delete Selected"**
+
+**Tip**: Keep the `audio_data/logs/` folder on Hyak for troubleshooting, but archive and delete the agent data folders after each batch.
 
 ## Advanced Usage
 
