@@ -356,7 +356,47 @@ See the "Preparing Build Artifacts" section above for details.
 
 # Or with custom score threshold (default is 75)
 ./run_speaker_analysis.sh audio_data 80
+
+# With custom model and memory
+./run_speaker_analysis.sh --ollama-model deepseek-r1:32b --mem 32 audio_data 75
 ```
+
+### Open OnDemand Submission (Web Interface)
+
+Use `submit_analysis.slurm` for submitting jobs via Hyak's [Open OnDemand](https://hyak.uw.edu/docs/ood/schedule-job):
+
+**Default configuration:**
+| Parameter | Default Value |
+|-----------|--------------|
+| Model | `deepseek-r1:32b` |
+| Memory | `32GB` |
+| Threshold | `75` |
+| GPUs | `1` |
+| Time | `2 hours` |
+
+**To customize**, edit `submit_analysis.slurm`:
+
+```bash
+# Change the Ollama model
+./run_speaker_analysis.sh \
+    --ollama-model deepseek-r1:32b \  # Change model here
+    --mem 32 \                         # Change memory here
+    audio_data/ \
+    75                                 # Change threshold here
+```
+
+**Memory recommendations by model:**
+| Model | Recommended Memory |
+|-------|-------------------|
+| `deepseek-r1:32b` | 32GB |
+| `deepseek-r1:70b` | 81GB |
+
+**Submit via OOD:**
+1. Go to [Hyak Open OnDemand](https://ondemand.hyak.uw.edu)
+2. Navigate to Jobs → Job Composer
+3. Upload or create job from `submit_analysis.slurm`
+4. Submit the job
+5. Monitor progress in Jobs → Active Jobs
 
 ### Manual Python Execution
 
@@ -435,7 +475,7 @@ apptainer exec --nv $OLLAMA_IMAGE ollama --version
 # - call_002: Lower-quality (expected score ~50-70)
 
 # Allocate GPU node for testing
-salloc -A uwit -p gpu-rtx6k -c 4 --gpus=1 --mem=81G --time=1:00:00
+salloc -A uwit -p gpu-rtx6k -c 4 --gpus=1 --mem=32G --time=1:00:00
 
 # Start Ollama server
 export OLLAMA_HOST="127.0.0.1:11434"
@@ -632,7 +672,7 @@ apptainer exec --nv $WHISPERX_IMAGE \
 **Solutions**:
 ```bash
 # Request more memory
-salloc -A uwit -p gpu-rtx6k --mem=81G  # Instead of default
+salloc -A uwit -p gpu-rtx6k --mem=32G  # Instead of default
 
 # Or reduce batch size in processing scripts
 # (Advanced - modify submit_slurm.py)
