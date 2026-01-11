@@ -25,7 +25,7 @@ export PROJECT_ROOT="${GSCRATCH_BASE}/uwitsc-call-analysis"
 for dir in "${GSCRATCH_BASE}/ollama" \
            "${GSCRATCH_BASE}/apptainer-cache" \
            "${GSCRATCH_BASE}/apptainer-tmp" \
-           "${GSCRATCH_BASE}/xgd-cache"; do
+           "${GSCRATCH_BASE}/xdg-cache"; do
     [ -d "$dir" ] || mkdir -p "$dir"
 done
 
@@ -33,7 +33,7 @@ done
 export APPTAINER_CACHEDIR="${GSCRATCH_BASE}/apptainer-cache"
 export APPTAINER_TMPDIR="${GSCRATCH_BASE}/apptainer-tmp"
 export OLLAMA_MODELS="${GSCRATCH_BASE}/ollama"
-export XDG_CACHE_HOME="${GSCRATCH_BASE}/xgd-cache"
+export XDG_CACHE_HOME="${GSCRATCH_BASE}/xdg-cache"
 export PIP_CACHE_DIR="${XDG_CACHE_HOME}/pip"
 export HF_HOME="${XDG_CACHE_HOME}/huggingface"
 export TRANSFORMERS_CACHE="${HF_HOME}/transformers"
@@ -50,7 +50,7 @@ fi
 # IMPORTANT: Use ABSOLUTE paths for compute node compatibility
 export WHISPERX_IMAGE="${PROJECT_ROOT}/whisperx_python.sif"
 export OLLAMA_IMAGE="${PROJECT_ROOT}/ollama_python.sif"
-export OLLAMA_MODEL="deepseek-r1:70b"
+export OLLAMA_MODEL="deepseek-r1:32b"
 # IMPORTANT: Replace with your actual SLURM account name
 export SLURM_ACCOUNT="uwit"
 

@@ -361,43 +361,6 @@ See the "Preparing Build Artifacts" section above for details.
 ./run_speaker_analysis.sh --ollama-model deepseek-r1:32b --mem 32 audio_data 75
 ```
 
-### Open OnDemand Submission (Web Interface)
-
-Use `submit_analysis.slurm` for submitting jobs via Hyak's [Open OnDemand](https://hyak.uw.edu/docs/ood/schedule-job):
-
-**Default configuration:**
-| Parameter | Default Value |
-|-----------|--------------|
-| Model | `deepseek-r1:32b` |
-| Memory | `32GB` |
-| Threshold | `75` |
-| GPUs | `1` |
-| Time | `2 hours` |
-
-**To customize**, edit `submit_analysis.slurm`:
-
-```bash
-# Change the Ollama model
-./run_speaker_analysis.sh \
-    --ollama-model deepseek-r1:32b \  # Change model here
-    --mem 32 \                         # Change memory here
-    audio_data/ \
-    75                                 # Change threshold here
-```
-
-**Memory recommendations by model:**
-| Model | Recommended Memory |
-|-------|-------------------|
-| `deepseek-r1:32b` | 32GB |
-| `deepseek-r1:70b` | 81GB |
-
-**Submit via OOD:**
-1. Go to [Hyak Open OnDemand](https://ondemand.hyak.uw.edu)
-2. Navigate to Jobs → Job Composer
-3. Upload or create job from `submit_analysis.slurm`
-4. Submit the job
-5. Monitor progress in Jobs → Active Jobs
-
 ### Manual Python Execution
 
 ```bash

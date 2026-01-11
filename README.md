@@ -32,7 +32,6 @@ home-directory/
 ├── whisperx_script.py                       # speech-to-text on each individual audio file with speaker diarization and timestamps
 ├── analyze_with_ollama.py                   # LLM-based scoring using deepseek-r1:32b model via Ollama
 ├── run_speaker_analysis.sh                  # shell script to run the above .py files via the command line
-├── submit_analysis.slurm                    # SLURM batch script for Open OnDemand submission
 ├── ollama_python.def                        # Apptainer definition for Ollama container
 ├── whisperx_python.def                      # Apptainer definition for WhisperX container
 └── audio_data/                              # input/output directory
@@ -108,37 +107,6 @@ source ~/.bashrc
 ```bash
 ./run_speaker_analysis.sh --ollama-model deepseek-r1:32b --mem 32 audio_data 75
 ```
-
-#### Option B: Open OnDemand (Web Interface)
-
-Use `submit_analysis.slurm` for submitting jobs via Hyak's [Open OnDemand](https://hyak.uw.edu/docs/ood/schedule-job) web interface.
-
-**Default configuration:**
-- Model: `deepseek-r1:32b`
-- Memory: `32GB`
-- Threshold: `75`
-
-**To customize**, edit `submit_analysis.slurm` before submitting:
-
-```bash
-# Change model (line with --ollama-model)
---ollama-model deepseek-r1:32b    # Default (32GB memory)
---ollama-model deepseek-r1:70b    # Larger model (81GB memory)
-
-# Change memory (SBATCH directive)
-#SBATCH --mem=32G                 # For deepseek-r1:32b
-#SBATCH --mem=81G                 # For deepseek-r1:70b
-
-# Change threshold (last argument)
-audio_data/ 75                    # Default threshold
-audio_data/ 80                    # Stricter threshold
-```
-
-**Submit via OOD:**
-1. Go to [Hyak Open OnDemand](https://ondemand.hyak.uw.edu)
-2. Navigate to Jobs → Job Composer
-3. Upload or create job from `submit_analysis.slurm`
-4. Submit the job
 
 ### Step 4: Monitor Progress
 

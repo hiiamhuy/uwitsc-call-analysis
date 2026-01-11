@@ -22,9 +22,8 @@ module load apptainer
 SIF_PATH="${OLLAMA_IMAGE:-${PROJECT_ROOT}/ollama_python.sif}"
 MODEL="deepseek-r1:32b"
 
-# Configure Ollama env
-# Using a custom port to avoid any potential conflicts on the shared node
-export OLLAMA_HOST="127.0.0.1:11435" 
+# Configure Ollama env (uses standard port 11434)
+export OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}" 
 
 echo "Starting Ollama Server..."
 # We bind HOME because that's where ~/.ollama/models lives by default
