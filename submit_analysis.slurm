@@ -1,12 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=call_analysis
-#SBATCH --partition=gpu-rtx6k
+#SBATCH --partition=compute
 #SBATCH --account=uwit
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
-#SBATCH --gpus=1
-#SBATCH --time=02:00:00
+#SBATCH --mem=8G
+#SBATCH --time=12:00:00
 #SBATCH --output=audio_data/logs/analysis_%j.out
 #SBATCH --error=audio_data/logs/analysis_%j.err
 
