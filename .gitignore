@@ -1,0 +1,5 @@
+audio_data/
+ollama_python.sif
+whisperx_python.sif
+ollama_server.log
+__pycache__/
