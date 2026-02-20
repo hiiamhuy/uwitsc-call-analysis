@@ -1,6 +1,6 @@
 # Hyak Setup Guide - UW ITSC Call Analysis Pipeline
 
-**Last Updated**: 2025-12-30
+**Last Updated**: 2026-02-20
 **Status**: Production Ready
 **Tested On**: Hyak Klone cluster
 
@@ -35,12 +35,12 @@ git clone https://github.com/hiiamhuy/uwitsc-call-analysis.git
 cd uwitsc-call-analysis
 
 # 3. Configure environment (edit with your details)
-nano docs/hyak_bashrc.example
+nano docs/hyak_bashrc.example.sh
 # Change: UWNETID="your_uwnetid" → UWNETID="<your-netid>"
 # Add: Your Hugging Face token: export HF_TOKEN="hf_your_token_here"
 
 # 4. Add to your ~/.bashrc
-echo "source /mmfs1/gscratch/fellows/<your-netid>/uwitsc-call-analysis/docs/hyak_bashrc.example" >> ~/.bashrc
+echo "source /mmfs1/gscratch/fellows/<your-netid>/uwitsc-call-analysis/docs/hyak_bashrc.example.sh" >> ~/.bashrc
 source ~/.bashrc
 
 # 5. Download Ollama binary archive (~1.3GB)
@@ -92,7 +92,7 @@ Before starting, ensure you have:
 
 ## Installation Methods
 
-### Method 1: Using docs/hyak_bashrc.example (RECOMMENDED)
+### Method 1: Using docs/hyak_bashrc.example.sh (RECOMMENDED)
 
 This method provides:
 - **Persistent configuration** across all login sessions
@@ -114,21 +114,21 @@ git clone https://github.com/hiiamhuy/uwitsc-call-analysis.git uwitsc-call-analy
 cd uwitsc-call-analysis
 ```
 
-#### Step 2: Configure docs/hyak_bashrc.example
+#### Step 2: Configure docs/hyak_bashrc.example.sh
 
 ```bash
 # Open the configuration file
-nano docs/hyak_bashrc.example
+nano docs/hyak_bashrc.example.sh
 ```
 
 **Make these changes:**
 
-1. **Line 19** - Update your NetID:
+1. **Line 20** - Update your NetID:
    ```bash
-   export UWNETID="your_netid_here"  # Change from "hiiamhuy"
+   export UWNETID="your_netid_here"  # Change from "transcribeit"
    ```
 
-2. **After line 81** - Add your Hugging Face token:
+2. **Line 97** - Add your Hugging Face token:
    ```bash
    # Keep Hugging Face token out of history (set the value manually once)
    export HF_TOKEN="hf_your_actual_token_here"  # Add this line
@@ -140,7 +140,7 @@ nano docs/hyak_bashrc.example
 
 ```bash
 # Add source line to your ~/.bashrc
-echo "source /mmfs1/gscratch/fellows/<your-netid>/uwitsc-call-analysis/docs/hyak_bashrc.example" >> ~/.bashrc
+echo "source /mmfs1/gscratch/fellows/<your-netid>/uwitsc-call-analysis/docs/hyak_bashrc.example.sh" >> ~/.bashrc
 
 # Load the configuration
 source ~/.bashrc
@@ -173,7 +173,7 @@ Ollama models dir: /mmfs1/gscratch/fellows/<your-netid>/ollama
 **Configuration complete!** This persists across all future logins.
 
 #### Important: Python Module
-The `docs/hyak_bashrc.example` file automatically loads Python 3.11 (required for the orchestrator script). If you encounter Python version errors:
+The `docs/hyak_bashrc.example.sh` file automatically loads Python 3.11 (required for the orchestrator script). If you encounter Python version errors:
 
 ```bash
 # Verify Python version (should be 3.11.9)
@@ -339,7 +339,7 @@ See the "Preparing Build Artifacts" section above for details.
 **Solution**: Ensure you're using `-p compute` partition (NOT `-p build`)
 
 **Problem**: "disk quota exceeded"
-**Solution**: Make sure `APPTAINER_CACHEDIR` points to gscratch (set by hyak_bashrc.example)
+**Solution**: Make sure `APPTAINER_CACHEDIR` points to gscratch (set by hyak_bashrc.example.sh)
 
 **Problem**: Build takes very long (>3 hours)
 **Solution**: Normal for first build. Check `squeue -u $USER` to ensure job is still running
@@ -534,7 +534,7 @@ source ~/.bashrc
 #### PyTorch pickle loading error
 **Problem**: `_pickle.UnpicklingError: Weights only load failed`
 **Status**: **FIXED** - Environment variable already set
-**Details**: PyTorch 2.6+ changed security defaults. The fix (`TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=true`) is already included in both `docs/hyak_bashrc.example` and `.env.example`.
+**Details**: PyTorch 2.6+ changed security defaults. The fix (`TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=true`) is already included in both `docs/hyak_bashrc.example.sh` and `.env.example`.
 
 **Verify fix is active**:
 ```bash
@@ -701,7 +701,7 @@ See [scripts/PARALLEL_TESTING_README.md](scripts/PARALLEL_TESTING_README.md) for
 
 ### Configuration Files
 - **Environment template**: [.env.example](.env.example) - All configuration variables
-- **Bashrc template**: [docs/hyak_bashrc.example](docs/hyak_bashrc.example) - Persistent environment
+- **Bashrc template**: [docs/hyak_bashrc.example.sh](docs/hyak_bashrc.example.sh) - Persistent environment
 - **Container definitions**: `whisperx_python.def`, `ollama_python.def` - Build specifications
 
 ### Test Reports

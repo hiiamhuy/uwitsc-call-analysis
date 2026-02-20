@@ -12,7 +12,7 @@
 # Required environment variables (defined in ~/.bashrc):
 #   OLLAMA_IMAGE   - Path to ollama_python.sif container
 #   PROJECT_ROOT   - Base path to uwitsc-call-analysis directory
-# See docs/hyak_bashrc.example for setup instructions
+# See docs/hyak_bashrc.example.sh for setup instructions
 
 set -e
 

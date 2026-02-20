@@ -610,7 +610,7 @@ exit
 - **[Hyak_Setup.md](Hyak_Setup.md)** - Complete installation and setup guide
 - **[README.md](README.md)** - Project overview and workflow
 - **[submit_slurm.py](submit_slurm.py)** - Production SLURM configuration
-- **[docs/hyak_bashrc.example](docs/hyak_bashrc.example)** - Environment setup
+- **[docs/hyak_bashrc.example.sh](docs/hyak_bashrc.example.sh)** - Environment setup
 
 ---
 
