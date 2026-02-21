@@ -118,6 +118,7 @@ set -euo pipefail
 module load apptainer
 
 export HF_TOKEN="{self.hf_token}"
+export PYTHONUNBUFFERED=1
 
 REPO_ROOT="{repo_root}"
 BASE_DIR="{self.base_dir}"
