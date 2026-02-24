@@ -1,0 +1,100 @@
+# ~/.bashrc example for Hyak
+#
+# Mirrors the stock Hyak bashrc but redirects large caches to gscratch, sets
+# project defaults, and keeps Hugging Face/Ollama artifacts off the 10 GB home
+# partition.
+
+# Source global definitions provided by Hyak
+if [ -f /etc/bashrc ]; then
+    . /etc/bashrc
+fi
+
+# Stop here for non-interactive shells
+case $- in
+    *i*) ;;    # interactive shell, continue setup
+    *) return;;
+esac
+
+# ---- Core Hyak directories -------------------------------------------------
+# IMPORTANT: Replace with your actual UW NetID
+export UWNETID="transcribeit"
+export GSCRATCH_BASE="/mmfs1/gscratch/fellows/${UWNETID}"
+export PROJECT_ROOT="${GSCRATCH_BASE}/uwitsc-call-analysis"
+
+# Ensure cache directories exist (runs quickly even if they already exist)
+for dir in "${GSCRATCH_BASE}/ollama" \
+           "${GSCRATCH_BASE}/apptainer-cache" \
+           "${GSCRATCH_BASE}/apptainer-tmp" \
+           "${GSCRATCH_BASE}/xdg-cache"; do
+    [ -d "$dir" ] || mkdir -p "$dir"
+done
+
+# Redirect high-volume caches to gscratch
+export APPTAINER_CACHEDIR="${GSCRATCH_BASE}/apptainer-cache"
+export APPTAINER_TMPDIR="${GSCRATCH_BASE}/apptainer-tmp"
+export OLLAMA_MODELS="${GSCRATCH_BASE}/ollama"
+export XDG_CACHE_HOME="${GSCRATCH_BASE}/xdg-cache"
+export PIP_CACHE_DIR="${XDG_CACHE_HOME}/pip"
+export HF_HOME="${XDG_CACHE_HOME}/huggingface"
+export TRANSFORMERS_CACHE="${HF_HOME}/transformers"
+
+# Bind ~/.ollama to the relocated model store if the symlink is missing
+if [ ! -L "$HOME/.ollama" ]; then
+    if [ -d "$HOME/.ollama" ]; then
+        mv "$HOME/.ollama" "$HOME/.ollama.bak.$(date +%Y%m%d%H%M%S)"
+    fi
+    ln -s "${OLLAMA_MODELS}" "$HOME/.ollama"
+fi
+
+# ---- Container and model configuration -------------------------------------
+# IMPORTANT: Use ABSOLUTE paths for compute node compatibility
+export WHISPERX_IMAGE="${PROJECT_ROOT}/whisperx_python.sif"
+export OLLAMA_IMAGE="${PROJECT_ROOT}/ollama_python.sif"
+export OLLAMA_MODEL="deepseek-r1:32b"
+# IMPORTANT: Replace with your actual SLURM account name
+export SLURM_ACCOUNT="uwit"
+
+# PyTorch fix for 2.6+ pickle loading security changes
+# See: https://github.com/m-bain/whisperX/issues/1304
+export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=true
+
+# ---- Project quality-of-life tweaks ---------------------------------------
+
+# Basic prompt and history improvements
+export HISTSIZE=5000
+export HISTFILESIZE=10000
+export PROMPT_COMMAND='history -a; history -n; echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"'
+
+# Add project scripts to the PATH when present
+if [ -d "${PROJECT_ROOT}/bin" ]; then
+    export PATH="${PROJECT_ROOT}/bin:${PATH}"
+fi
+
+# Shortcuts for navigating the project
+alias cproj="cd ${PROJECT_ROOT}"
+alias lsc="ls -F --color=auto"
+alias ll="ls -alF --color=auto"
+
+# Module defaults (adjust as needed)
+if command -v module >/dev/null 2>&1; then
+    module load apptainer/1.2.5 >/dev/null 2>&1
+    # Load Python 3.11 for submit_slurm.py (requires Python 3.7+)
+    module load coenv/python/3.11.9 >/dev/null 2>&1
+fi
+
+# WhisperX & Ollama helper to verify container paths quickly
+whisperx_check() {
+    echo "WhisperX image: ${WHISPERX_IMAGE:-unset}";
+}
+
+ollama_check() {
+    echo "Ollama image: ${OLLAMA_IMAGE:-unset}";
+    echo "Ollama models dir: ${OLLAMA_MODELS}"
+}
+
+# IMPORTANT: Set your Hugging Face token (get from https://huggingface.co/settings/tokens)
+# Replace 'your_token_here' with your actual token
+export HF_TOKEN="your_token_here"
+
+# Final banner (optional)
+echo "[Hyak] caches → ${GSCRATCH_BASE}; project → ${PROJECT_ROOT}"
